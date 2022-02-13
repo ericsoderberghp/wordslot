@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Grommet, Box, Heading, Keyboard, Text } from "grommet";
+import React, { useEffect, useRef, useState } from "react";
+import { Grommet, Box, Heading, Keyboard, Text, TextInput } from "grommet";
 
 const theme = {
   global: {
@@ -13,6 +13,9 @@ const theme = {
       family: "Courier",
     },
   },
+  textInput: {
+    extend: 'opacity: 0',
+  }
 };
 
 const indexes = [0, 1, 2, 3, 4];
@@ -92,6 +95,7 @@ function App() {
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
   const [matches, setMatches] = useState({});
+  const inputRef = useRef();
 
   useEffect(() => {
     if (!word)
@@ -120,6 +124,8 @@ function App() {
     });
     setMatches(nextMatches);
   }, [guesses, word]);
+
+  useEffect(() => inputRef.current.focus(), []);
 
   return (
     <Grommet full theme={theme}>
@@ -191,6 +197,7 @@ function App() {
                 );
               })}
             </Box>
+            <TextInput ref={inputRef} minSize={5} maxSize={5} value={guess} />
           </Box>
         </Box>
       </Keyboard>
