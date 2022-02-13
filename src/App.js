@@ -94,7 +94,7 @@ const Guess = ({ guess, matches, word }) => {
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
           if (word === guess)
-            animation.push({ type: "pulse", delay: 2000 + (200 * index) });
+            animation.push({ type: "pulse", delay: 2000 + 200 * index });
         }
 
         return (
@@ -127,28 +127,33 @@ function App() {
 
   const themeMode = useMemo(() => browserThemeMode(), []);
 
-  // get a word if we don't have one
-  useEffect(() => {
-    if (!word) {
-      setFetching(true);
-      fetch("https://www.boredapi.com/api/activity")
-        .then((r) => r.json())
-        .then((r) => r.activity)
-        .then((a) => {
-          // find a five letter word
-          let nextWord = a
-            .split(" ")
-            .filter((w) => w.length === 5)
-            .filter((w) => alpha.test(w))[0];
-          if (nextWord) {
-            nextWord = nextWord.toLowerCase();
-            setWord(nextWord);
-            console.log(nextWord);
-          } else console.log("couldn't find a word :(");
-          setFetching(false);
-        });
-    }
-  }, [word]);
+  const getWord = () => {
+    setFetching(true);
+    // fetch("https://www.boredapi.com/api/activity")
+    // fetch("https://www.randomlists.com/data/words.json")
+    fetch("https://random-word-api.herokuapp.com/word?number=30")
+      .then((r) => r.json())
+      .then((words) => {
+        // find a five letter word
+        let validWords = words
+          .filter((w) => w.length === 5)
+          .filter((w) => alpha.test(w));
+        // choose a random one
+        let nextWord =
+          validWords[Math.floor(Math.random() * validWords.length)];
+        if (nextWord) {
+          nextWord = nextWord.toLowerCase();
+          setWord(nextWord);
+          console.log(nextWord);
+        } else console.log("couldn't find a word :(");
+        setFetching(false);
+      })
+      .catch(() => {})
+      .finally(() => setFetching(false));
+  };
+
+  // get a word to start with
+  useEffect(() => getWord(), []);
 
   // update the matches map
   useEffect(() => {
@@ -197,9 +202,11 @@ function App() {
       >
         <Box
           fill
+          overflow="auto"
           align="center"
           pad="medium"
           hoverIndicator={false}
+          focusIndicator={false}
           onClick={() => inputRef.current.focus()}
         >
           <Box basis="medium" align="center" gap="medium">
@@ -231,6 +238,7 @@ function App() {
                     setGuess("");
                     setMatches({});
                     setWord(undefined);
+                    getWord();
                   }}
                 />
               </Box>
