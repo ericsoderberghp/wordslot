@@ -1,1 +1,1 @@
-# wordslot
+# word slot
