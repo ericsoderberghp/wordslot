@@ -186,6 +186,7 @@ function App() {
               alignSelf="stretch"
               margin={{ vertical: "medium" }}
               direction="row"
+              justify="center"
               wrap
             >
               {letters.map((l) => {
