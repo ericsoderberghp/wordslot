@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Grommet, Box, Heading, Keyboard, Text, TextInput } from "grommet";
 
 const theme = {
@@ -14,8 +14,8 @@ const theme = {
     },
   },
   textInput: {
-    extend: 'opacity: 0',
-  }
+    extend: "opacity: 0",
+  },
 };
 
 const indexes = [0, 1, 2, 3, 4];
@@ -157,7 +157,13 @@ function App() {
             : undefined
         }
       >
-        <Box fill align="center" pad="medium">
+        <Box
+          fill
+          align="center"
+          pad="medium"
+          hoverIndicator={false}
+          onClick={() => inputRef.current.focus()}
+        >
           <Box basis="medium" align="center" gap="xsmall">
             <Heading>word slot</Heading>
             {guesses.map((guess, index) => (
@@ -197,7 +203,13 @@ function App() {
                 );
               })}
             </Box>
-            <TextInput ref={inputRef} minSize={5} maxSize={5} value={guess} />
+            <TextInput
+              ref={inputRef}
+              minSize={5}
+              maxSize={5}
+              value={guess}
+              autocomplete="off"
+            />
           </Box>
         </Box>
       </Keyboard>
