@@ -1,13 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Grommet, Box, Heading, Keyboard, Text, TextInput } from "grommet";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Grommet,
+  Box,
+  Button,
+  Heading,
+  Keyboard,
+  Text,
+  TextInput,
+} from "grommet";
 
 const theme = {
   global: {
     colors: {
-      background: "#FFFFFF",
+      background: {
+        dark: "#111111",
+        light: "#FFFFFF",
+      },
+      brand: "#5395A9",
+      focus: "brand",
       match: "#00FF0066",
       mismatch: "#FFFF0066",
-      unmatch: "#CCCCCC",
+      unmatch: {
+        dark: "#333333",
+        light: "#CCCCCC",
+      },
     },
     font: {
       family: "Courier",
@@ -17,6 +33,11 @@ const theme = {
     extend: "opacity: 0",
   },
 };
+
+const browserThemeMode = () =>
+  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+const alpha = /^[a-z,A-Z]+$/;
 
 const indexes = [0, 1, 2, 3, 4];
 
@@ -63,6 +84,19 @@ const Guess = ({ guess, matches, word }) => {
             border.push({ side: "start", size: "small", color: "background" });
         }
 
+        // remind the user if a letter doesn't match anything
+        const color =
+          (guess[index] && matches && matches[guess[index]]) === "unmatch"
+            ? "unmatch"
+            : undefined;
+
+        const animation = [];
+        if (word) {
+          animation.push({ type: "fadeIn", delay: 500 * index });
+          if (word === guess)
+            animation.push({ type: "pulse", delay: 2000 + (200 * index) });
+        }
+
         return (
           <Box
             key={index}
@@ -71,16 +105,9 @@ const Guess = ({ guess, matches, word }) => {
             pad="small"
             background={background}
             round="xsmall"
+            animation={animation}
           >
-            <Text
-              size="3xl"
-              weight="bold"
-              color={
-                (guess[index] && matches && matches[guess[index]]) === "unmatch"
-                  ? "unmatch"
-                  : undefined
-              }
-            >
+            <Text size="3xl" weight="bold" color={color}>
               {guess[index] || <Blank />}
             </Text>
           </Box>
@@ -91,28 +118,39 @@ const Guess = ({ guess, matches, word }) => {
 };
 
 function App() {
+  const [fetching, setFetching] = useState(true);
   const [word, setWord] = useState();
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
   const [matches, setMatches] = useState({});
   const inputRef = useRef();
 
+  const themeMode = useMemo(() => browserThemeMode(), []);
+
+  // get a word if we don't have one
   useEffect(() => {
-    if (!word)
+    if (!word) {
+      setFetching(true);
       fetch("https://www.boredapi.com/api/activity")
         .then((r) => r.json())
         .then((r) => r.activity)
         .then((a) => {
           // find a five letter word
-          let nextWord = a.split(" ").filter((w) => w.length === 5)[0];
+          let nextWord = a
+            .split(" ")
+            .filter((w) => w.length === 5)
+            .filter((w) => alpha.test(w))[0];
           if (nextWord) {
             nextWord = nextWord.toLowerCase();
             setWord(nextWord);
             console.log(nextWord);
-          }
+          } else console.log("couldn't find a word :(");
+          setFetching(false);
         });
+    }
   }, [word]);
 
+  // update the matches map
   useEffect(() => {
     const nextMatches = {};
     guesses.forEach((guess) => {
@@ -128,7 +166,7 @@ function App() {
   useEffect(() => inputRef.current.focus(), []);
 
   return (
-    <Grommet full theme={theme}>
+    <Grommet full theme={theme} themeMode={themeMode}>
       <Keyboard
         target="document"
         onEnter={
@@ -151,7 +189,7 @@ function App() {
                   // lower alpha (a-z)
                   (keyCode > 96 && keyCode < 123)
                 ) {
-                  setGuess(`${guess}${key}`);
+                  setGuess(`${guess}${key.toLowerCase()}`);
                 }
               }
             : undefined
@@ -164,15 +202,17 @@ function App() {
           hoverIndicator={false}
           onClick={() => inputRef.current.focus()}
         >
-          <Box basis="medium" align="center" gap="xsmall">
+          <Box basis="medium" align="center" gap="medium">
             <Heading>word slot</Heading>
-            {guesses.map((guess, index) => (
-              <Guess key={index} guess={guess} word={word} />
-            ))}
-            {guesses[guesses.length - 1] !== word && (
-              <Guess guess={guess} matches={matches} />
-            )}
-            <Box flex={false} margin={{ top: "medium" }}>
+            <Box flex={false} gap="xsmall">
+              {guesses.map((guess, index) => (
+                <Guess key={index} guess={guess} word={word} />
+              ))}
+              {word && guesses[guesses.length - 1] !== word && (
+                <Guess guess={guess} matches={matches} />
+              )}
+            </Box>
+            <Box flex={false}>
               <Text color="text-weak">
                 {guess.length === indexes.length ? (
                   "press Return or Enter to check"
@@ -181,10 +221,23 @@ function App() {
                 )}
               </Text>
             </Box>
+            {(!word || guesses[guesses.length - 1] === word) && (
+              <Box flex={false} animation={{ type: "fadeIn", delay: 2000 }}>
+                <Button
+                  label="new game"
+                  disabled={fetching}
+                  onClick={() => {
+                    setGuesses([]);
+                    setGuess("");
+                    setMatches({});
+                    setWord(undefined);
+                  }}
+                />
+              </Box>
+            )}
             <Box
               flex={false}
               alignSelf="stretch"
-              margin={{ vertical: "medium" }}
               direction="row"
               justify="center"
               wrap
@@ -193,11 +246,12 @@ function App() {
                 const background = matches[l];
                 return (
                   <Box
-                    key={l}
+                    key={l + background}
                     pad={{ horizontal: "xsmall", bottom: "xsmall" }}
                     background={background}
                     round="xsmall"
                     border={{ side: true, color: "background" }}
+                    animation={{ type: "fadeIn", delay: 2000 }}
                   >
                     <Text>{l}</Text>
                   </Box>
