@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Grommet,
+  Anchor,
   Box,
   Button,
   Heading,
@@ -144,6 +145,9 @@ function App() {
         if (nextWord) {
           nextWord = nextWord.toLowerCase();
           setWord(nextWord);
+          setGuesses([]);
+          setGuess("");
+          setMatches({});
           console.log(nextWord);
         } else console.log("couldn't find a word :(");
         setFetching(false);
@@ -210,7 +214,10 @@ function App() {
           onClick={() => inputRef.current.focus()}
         >
           <Box basis="medium" align="center" gap="medium">
-            <Heading>word slot</Heading>
+            <Box flex={false} align="center">
+              <Heading margin="none">word slot</Heading>
+              <Text color="text-xweak">guess the five letter word</Text>
+            </Box>
             <Box flex={false} gap="xsmall">
               {guesses.map((guess, index) => (
                 <Guess key={index} guess={guess} word={word} />
@@ -219,15 +226,26 @@ function App() {
                 <Guess guess={guess} matches={matches} />
               )}
             </Box>
-            <Box flex={false}>
-              <Text color="text-weak">
-                {guess.length === indexes.length ? (
-                  "press Return or Enter to check"
-                ) : (
+            {(guess.length === indexes.length && (
+              <Box key="help" flex={false} animation={{ type: "fadeIn", delay: 1000 }}>
+                <Text color="text-weak">press return to check</Text>
+              </Box>
+            )) ||
+              (word &&
+                guesses.length &&
+                guesses[guesses.length - 1] === word && (
+                  <Box key="def" flex={false} animation={{ type: "fadeIn", delay: 2000 }}>
+                    <Anchor
+                      label="definition"
+                      href={`https://www.thefreedictionary.com/${word}`}
+                      target="_blank"
+                    />
+                  </Box>
+                )) || (
+                <Box flex={false}>
                   <Blank />
-                )}
-              </Text>
-            </Box>
+                </Box>
+              )}
             {(!word || guesses[guesses.length - 1] === word) && (
               <Box flex={false} animation={{ type: "fadeIn", delay: 2000 }}>
                 <Button
@@ -250,21 +268,22 @@ function App() {
               justify="center"
               wrap
             >
-              {letters.map((l) => {
-                const background = matches[l];
-                return (
-                  <Box
-                    key={l + background}
-                    pad={{ horizontal: "xsmall", bottom: "xsmall" }}
-                    background={background}
-                    round="xsmall"
-                    border={{ side: true, color: "background" }}
-                    animation={{ type: "fadeIn", delay: 2000 }}
-                  >
-                    <Text>{l}</Text>
-                  </Box>
-                );
-              })}
+              {guesses.length > 0 &&
+                letters.map((l) => {
+                  const background = matches[l];
+                  return (
+                    <Box
+                      key={l + background}
+                      pad={{ horizontal: "xsmall", bottom: "xsmall" }}
+                      background={background}
+                      round="xsmall"
+                      border={{ side: true, color: "background" }}
+                      animation={{ type: "fadeIn", delay: 2000 }}
+                    >
+                      <Text>{l}</Text>
+                    </Box>
+                  );
+                })}
             </Box>
             <TextInput
               ref={inputRef}
