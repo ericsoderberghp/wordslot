@@ -22,8 +22,8 @@ const theme = {
       match: "#00FF0066",
       mismatch: "#FFFF0066",
       unmatch: {
-        dark: "#333333",
-        light: "#CCCCCC",
+        dark: "#FFFFFF44",
+        light: "#00000033",
       },
     },
     font: {
@@ -47,6 +47,8 @@ const letters = Array.from(Array(26))
   .map((x) => String.fromCharCode(x));
 
 const Blank = () => <>&nbsp;</>;
+
+const delayAnimation = { type: "fadeIn", delay: 2000 };
 
 const check = (index, guess, word) => {
   if (!word) return undefined;
@@ -218,36 +220,65 @@ function App() {
               <Heading margin="none">word slot</Heading>
               <Text color="text-xweak">guess the five letter word</Text>
             </Box>
+
             <Box flex={false} gap="xsmall">
               {guesses.map((guess, index) => (
                 <Guess key={index} guess={guess} word={word} />
               ))}
               {word && guesses[guesses.length - 1] !== word && (
-                <Guess guess={guess} matches={matches} />
+                <Box
+                  key={guesses.length}
+                  animation={guesses.length ? delayAnimation : undefined}
+                >
+                  <Guess guess={guess} matches={matches} />
+                </Box>
               )}
             </Box>
-            {(guess.length === indexes.length && (
-              <Box key="help" flex={false} animation={{ type: "fadeIn", delay: 1000 }}>
+
+            <Box
+              key={guesses.length}
+              flex={false}
+              align="center"
+              gap="medium"
+              animation={delayAnimation}
+            >
+              {(guess.length === indexes.length && (
                 <Text color="text-weak">press return to check</Text>
-              </Box>
-            )) ||
-              (word &&
-                guesses.length &&
-                guesses[guesses.length - 1] === word && (
-                  <Box key="def" flex={false} animation={{ type: "fadeIn", delay: 2000 }}>
+              )) ||
+                (word &&
+                  guesses.length &&
+                  guesses[guesses.length - 1] === word && (
                     <Anchor
                       label="definition"
                       href={`https://www.thefreedictionary.com/${word}`}
                       target="_blank"
                     />
-                  </Box>
-                )) || (
-                <Box flex={false}>
-                  <Blank />
-                </Box>
-              )}
-            {(!word || guesses[guesses.length - 1] === word) && (
-              <Box flex={false} animation={{ type: "fadeIn", delay: 2000 }}>
+                  )) || <Blank />}
+              <Box
+                flex={false}
+                alignSelf="stretch"
+                direction="row"
+                justify="center"
+                wrap
+              >
+                {guesses.length > 0 &&
+                  letters.map((l) => {
+                    const background = matches[l];
+                    return (
+                      <Box
+                        key={l + background}
+                        pad={{ horizontal: "xsmall", bottom: "xsmall" }}
+                        background={background}
+                        round="xsmall"
+                        border={{ side: true, color: "background" }}
+                        animation={delayAnimation}
+                      >
+                        <Text>{l}</Text>
+                      </Box>
+                    );
+                  })}
+              </Box>
+              {(!word || guesses[guesses.length - 1] === word) && (
                 <Button
                   label="new game"
                   disabled={fetching}
@@ -259,31 +290,7 @@ function App() {
                     getWord();
                   }}
                 />
-              </Box>
-            )}
-            <Box
-              flex={false}
-              alignSelf="stretch"
-              direction="row"
-              justify="center"
-              wrap
-            >
-              {guesses.length > 0 &&
-                letters.map((l) => {
-                  const background = matches[l];
-                  return (
-                    <Box
-                      key={l + background}
-                      pad={{ horizontal: "xsmall", bottom: "xsmall" }}
-                      background={background}
-                      round="xsmall"
-                      border={{ side: true, color: "background" }}
-                      animation={{ type: "fadeIn", delay: 2000 }}
-                    >
-                      <Text>{l}</Text>
-                    </Box>
-                  );
-                })}
+              )}
             </Box>
             <TextInput
               ref={inputRef}
