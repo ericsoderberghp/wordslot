@@ -125,13 +125,36 @@ function App() {
   const [word, setWord] = useState();
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
-  const [matches, setMatches] = useState({});
+  const [themeMode, setThemeMode] = useState(browserThemeMode());
   const inputRef = useRef();
 
-  const themeMode = useMemo(() => browserThemeMode(), []);
+  const matches = useMemo(() => {
+    const nextMatches = {};
+    guesses.forEach((guess) => {
+      indexes.forEach((index) => {
+        const result = check(index, guess, word);
+        if (nextMatches[guess[index]] !== "match")
+          nextMatches[guess[index]] = result;
+      });
+    });
+    return nextMatches;
+  }, [guesses, word]);
+
+  const done = useMemo(
+    () => word && guesses.length > 0 && guesses[guesses.length - 1] === word,
+    [guesses, word]
+  );
+
+  const message = useMemo(() => {
+    if (!guesses.length) return "Guess the five letter word";
+    if (guesses.length > 0 && !done) return "You're making progress!";
+    if (done) return `Congratulations! It took you ${guesses.length} guesses.`;
+    return "";
+  }, [done, guesses]);
 
   const getWord = () => {
     setFetching(true);
+    setThemeMode(browserThemeMode());
     // fetch("https://www.boredapi.com/api/activity")
     // fetch("https://www.randomlists.com/data/words.json")
     fetch("https://random-word-api.herokuapp.com/word?number=30")
@@ -149,7 +172,6 @@ function App() {
           setWord(nextWord);
           setGuesses([]);
           setGuess("");
-          setMatches({});
           console.log(nextWord);
         } else console.log("couldn't find a word :(");
         setFetching(false);
@@ -160,19 +182,6 @@ function App() {
 
   // get a word to start with
   useEffect(() => getWord(), []);
-
-  // update the matches map
-  useEffect(() => {
-    const nextMatches = {};
-    guesses.forEach((guess) => {
-      indexes.forEach((index) => {
-        const result = check(index, guess, word);
-        if (nextMatches[guess[index]] !== "match")
-          nextMatches[guess[index]] = result;
-      });
-    });
-    setMatches(nextMatches);
-  }, [guesses, word]);
 
   useEffect(() => inputRef.current.focus(), []);
 
@@ -218,7 +227,9 @@ function App() {
           <Box basis="medium" align="center" gap="medium">
             <Box flex={false} align="center">
               <Heading margin="none">word slot</Heading>
-              <Text color="text-xweak">guess the five letter word</Text>
+              <Box key={guesses.length} animation={delayAnimation}>
+                <Text color="text-xweak">{message}</Text>
+              </Box>
             </Box>
 
             <Box flex={false} gap="xsmall">
@@ -245,15 +256,13 @@ function App() {
               {(guess.length === indexes.length && (
                 <Text color="text-weak">press return to check</Text>
               )) ||
-                (word &&
-                  guesses.length &&
-                  guesses[guesses.length - 1] === word && (
-                    <Anchor
-                      label="definition"
-                      href={`https://www.thefreedictionary.com/${word}`}
-                      target="_blank"
-                    />
-                  )) || <Blank />}
+                (done && (
+                  <Anchor
+                    label="definition"
+                    href={`https://www.thefreedictionary.com/${word}`}
+                    target="_blank"
+                  />
+                )) || <Blank />}
               <Box
                 flex={false}
                 alignSelf="stretch"
@@ -278,14 +287,13 @@ function App() {
                     );
                   })}
               </Box>
-              {(!word || guesses[guesses.length - 1] === word) && (
+              {(!word || done) && (
                 <Button
                   label="new game"
                   disabled={fetching}
                   onClick={() => {
                     setGuesses([]);
                     setGuess("");
-                    setMatches({});
                     setWord(undefined);
                     getWord();
                   }}
