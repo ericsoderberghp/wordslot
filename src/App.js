@@ -121,7 +121,7 @@ const Guess = ({ guess, matches, word }) => {
 };
 
 function App() {
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState();
   const [word, setWord] = useState();
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
@@ -180,10 +180,9 @@ function App() {
       .finally(() => setFetching(false));
   };
 
-  // get a word to start with
-  useEffect(() => getWord(), []);
-
-  useEffect(() => inputRef.current.focus(), []);
+  useEffect(() => {
+    if (word) inputRef.current.focus();
+  }, [word]);
 
   return (
     <Grommet full theme={theme} themeMode={themeMode}>
@@ -228,7 +227,7 @@ function App() {
             <Box flex={false} align="center">
               <Heading margin="none">word slot</Heading>
               <Box key={guesses.length} animation={delayAnimation}>
-                <Text color="text-xweak">{message}</Text>
+                <Text color="text-xweak" textAlign="center">{message}</Text>
               </Box>
             </Box>
 
