@@ -296,8 +296,8 @@ function App() {
                     setGuesses([]);
                     setGuess("");
                     setWord(undefined);
-                    getWord();
                     setGiveup(false);
+                    getWord();
                   }}
                 />
               )}
