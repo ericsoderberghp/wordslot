@@ -126,6 +126,7 @@ function App() {
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
   const [themeMode, setThemeMode] = useState(browserThemeMode());
+  const [giveup,setGiveup] = useState(false);
   const inputRef = useRef();
 
   const matches = useMemo(() => {
@@ -148,9 +149,10 @@ function App() {
   const message = useMemo(() => {
     if (!guesses.length) return "Guess the five letter word";
     if (guesses.length > 0 && !done) return "You're making progress!";
-    if (done) return `Congratulations! It took you ${guesses.length} guesses.`;
+    if (done && giveup === false) return `Congratulations! It took you ${guesses.length} guesses.`;
+    if (done && giveup === true) return `You gave up after ${guesses.length-1} guesses.`;
     return "";
-  }, [done, guesses]);
+  }, [done, giveup, guesses]);
 
   const getWord = () => {
     setFetching(true);
@@ -176,7 +178,7 @@ function App() {
         } else console.log("couldn't find a word :(");
         setFetching(false);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetching(false));
   };
 
@@ -191,26 +193,26 @@ function App() {
         onEnter={
           guess.length === indexes.length
             ? () => {
-                const nextGuesses = [...guesses];
-                nextGuesses.push(guess);
-                setGuesses(nextGuesses);
-                setGuess("");
-              }
+              const nextGuesses = [...guesses];
+              nextGuesses.push(guess);
+              setGuesses(nextGuesses);
+              setGuess("");
+            }
             : undefined
         }
         onBackspace={() => setGuess(guess.slice(0, -1))}
         onKeyDown={
           guess.length < indexes.length
             ? ({ keyCode, key }) => {
-                if (
-                  // upper alpha (A-Z)
-                  (keyCode > 64 && keyCode < 91) ||
-                  // lower alpha (a-z)
-                  (keyCode > 96 && keyCode < 123)
-                ) {
-                  setGuess(`${guess}${key.toLowerCase()}`);
-                }
+              if (
+                // upper alpha (A-Z)
+                (keyCode > 64 && keyCode < 91) ||
+                // lower alpha (a-z)
+                (keyCode > 96 && keyCode < 123)
+              ) {
+                setGuess(`${guess}${key.toLowerCase()}`);
               }
+            }
             : undefined
         }
       >
@@ -294,7 +296,20 @@ function App() {
                     setGuesses([]);
                     setGuess("");
                     setWord(undefined);
+                    setGiveup(false);
                     getWord();
+                  }}
+                />
+              )}
+              {(word && guesses.length > 5 && !done) && (
+                <Button
+                  label="Give up"
+                  onClick={() => {
+                    const nextGuesses = [...guesses];
+                    nextGuesses.push(word);
+                    setGuesses(nextGuesses);
+                    setGuess("");
+                    setGiveup(true);
                   }}
                 />
               )}
