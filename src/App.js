@@ -152,7 +152,7 @@ function App() {
     if (done && giveup === false) return `Congratulations! It took you ${guesses.length} guesses.`;
     if (done && giveup === true) return `You gave up after ${guesses.length-1} guesses.`;
     return "";
-  }, [done, guesses]);
+  }, [done, giveup, guesses]);
 
   const getWord = () => {
     setFetching(true);
