@@ -301,7 +301,7 @@ function App() {
                   }}
                 />
               )}
-              {(word && guesses.length > 1 && !done) && (
+              {(word && guesses.length > 5 && !done) && (
                 <Button
                   label="Give up"
                   onClick={() => {
