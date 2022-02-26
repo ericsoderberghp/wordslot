@@ -31,7 +31,7 @@ const theme = {
     },
   },
   textInput: {
-    extend: "opacity: 0",
+    extend: "opacity: 0; cursor: pointer;",
   },
 };
 
