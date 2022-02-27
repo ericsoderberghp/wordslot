@@ -58,7 +58,7 @@ const check = (index, guess, word) => {
   return undefined;
 };
 
-const Guess = ({ guess, matches, word }) => {
+const Guess = ({ guess, matches, word , giveup}) => {
   const focusIndex = guess.length === indexes.length ? undefined : guess.length;
   return (
     <Box direction="row" flex={false}>
@@ -96,8 +96,10 @@ const Guess = ({ guess, matches, word }) => {
         const animation = [];
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
-          if (word === guess)
+          if (word === guess) {
+            if (giveup === false)
             animation.push({ type: "pulse", delay: 2000 + 200 * index });
+          }
         }
 
         return (
@@ -120,6 +122,18 @@ const Guess = ({ guess, matches, word }) => {
   );
 };
 
+const welcome = ("Guess the five letter word");
+const newMatched3 = ["Are you clarvoyant!?","Time to buy some lotto tickets"];
+const newMatched2 = ["Outstanding!","Fantastic!"];
+const newMatched1 = ["Well done!","Impressive"];
+const newMisMatch2 = ["Good job!","Nice!"];
+const newMisMatch1 = ["You're making progress.","Keep chipping away at it."];
+const NoNew = ["Bummer.","A few options eliminated."];
+const winner = ["Congratulations! It took you ", " guesses."];
+const loser = ["You gave up after ", " guesses."];
+let newMatches = 0;
+let newMisMatches = 0;
+
 function App() {
   const [fetching, setFetching] = useState();
   const [word, setWord] = useState();
@@ -132,10 +146,15 @@ function App() {
   const matches = useMemo(() => {
     const nextMatches = {};
     guesses.forEach((guess) => {
+      newMatches = 0;
+      newMisMatches = 0;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
-        if (nextMatches[guess[index]] !== "match")
+        if (nextMatches[guess[index]] !== "match") {
+          if (result === "match") newMatches = newMatches + 1;
+          if (result === "mismatch") newMisMatches = newMisMatches + 1;
           nextMatches[guess[index]] = result;
+        };
       });
     });
     return nextMatches;
@@ -147,12 +166,18 @@ function App() {
   );
 
   const message = useMemo(() => {
-    if (!guesses.length) return "Guess the five letter word";
-    if (guesses.length > 0 && !done) return "You're making progress!";
-    if (done && giveup === false) return `Congratulations! It took you ${guesses.length} guesses.`;
-    if (done && giveup === true) return `You gave up after ${guesses.length-1} guesses.`;
+    const r = Math.floor(Math.random() * 2);
+    if (!guesses.length) return welcome;
+    if (newMatches === 1 && !done) return newMatched1[r];
+    if (newMatches === 2 && !done) return newMatched2[r];
+    if (newMatches === 3 && !done) return newMatched3[r];
+    if (newMisMatches === 1 && !done) return newMisMatch1[r];
+    if (newMisMatches === 2 && !done) return newMisMatch2[r];
+    if (!done) return NoNew[r];
+    if (done && giveup === false) return winner[0] + guesses.length + winner[1];
+    if (done && giveup === true) return loser[0] + String(guesses.length-1) + loser[1];
     return "";
-  }, [done, giveup, guesses]);
+  }, [done, giveup, guesses, newMatches]);
 
   const getWord = () => {
     setFetching(true);
