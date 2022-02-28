@@ -177,7 +177,7 @@ function App() {
     if (done && giveup === false) return winner[0] + guesses.length + winner[1];
     if (done && giveup === true) return loser[0] + String(guesses.length-1) + loser[1];
     return "";
-  }, [done, giveup, guesses, newMatches]);
+  }, [done, giveup, guesses]);
 
   const getWord = () => {
     setFetching(true);
