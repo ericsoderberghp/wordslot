@@ -122,17 +122,17 @@ const Guess = ({ guess, matches, word , giveup}) => {
   );
 };
 
-const welcome = ("Guess the five letter word");
-const newMatched3 = ["Are you clarvoyant!?","Time to buy some lotto tickets"];
-const newMatched2 = ["Outstanding!","Fantastic!"];
-const newMatched1 = ["Well done!","Impressive"];
-const newMisMatch2 = ["Good job!","Nice!"];
-const newMisMatch1 = ["You're making progress.","Keep chipping away at it."];
-const NoNew = ["Bummer.","A few options eliminated."];
-const winner = ["Congratulations! It took you ", " guesses."];
-const loser = ["You gave up after ", " guesses."];
-let newMatches = 0;
-let newMisMatches = 0;
+const messages = {
+welcome: ["Guess the five letter word"],
+newMatched3: ["Are you clarvoyant!?","Time to buy some lotto tickets"],
+newMatched2: ["Outstanding!","Fantastic!"],
+newMatched1: ["Well done!","Impressive"],
+newMisMatch2: ["Good job!","Nice!"],
+newMisMatch1: ["You're making progress.","Keep chipping away at it."],
+NoNew: ["Bummer.","A few options eliminated."],
+winner: ["Congratulations! It took you ", " guesses."],
+loser: ["You gave up after ", " guesses."],
+};
 
 function App() {
   const [fetching, setFetching] = useState();
@@ -141,18 +141,15 @@ function App() {
   const [guess, setGuess] = useState("");
   const [themeMode, setThemeMode] = useState(browserThemeMode());
   const [giveup,setGiveup] = useState(false);
+  const [foundMatches, setFoundMatches] = useState(0);
   const inputRef = useRef();
 
   const matches = useMemo(() => {
     const nextMatches = {};
     guesses.forEach((guess) => {
-      newMatches = 0;
-      newMisMatches = 0;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
         if (nextMatches[guess[index]] !== "match") {
-          if (result === "match") newMatches = newMatches + 1;
-          if (result === "mismatch") newMisMatches = newMisMatches + 1;
           nextMatches[guess[index]] = result;
         };
       });
@@ -165,19 +162,28 @@ function App() {
     [guesses, word]
   );
 
+  const latestMatchCounts = useMemo(() => {
+    const allResults = letters.map((l) => matches[l]);
+    const newMatches = allResults.filter(x => x==="match").length - foundMatches;
+    setFoundMatches(foundMatches + newMatches);
+    const newMisMatches = allResults.filter(x => x==="mismatch").length;
+    console.log(newMatches, newMisMatches);
+    return {newMatches, newMisMatches};
+  }, [matches]);
+
   const message = useMemo(() => {
-    const r = Math.floor(Math.random() * 2);
-    if (!guesses.length) return welcome;
-    if (newMatches === 1 && !done) return newMatched1[r];
-    if (newMatches === 2 && !done) return newMatched2[r];
-    if (newMatches === 3 && !done) return newMatched3[r];
-    if (newMisMatches === 1 && !done) return newMisMatch1[r];
-    if (newMisMatches === 2 && !done) return newMisMatch2[r];
-    if (!done) return NoNew[r];
-    if (done && giveup === false) return winner[0] + guesses.length + winner[1];
-    if (done && giveup === true) return loser[0] + String(guesses.length-1) + loser[1];
+    const randomMessage = (messages) => messages[Math.floor(Math.random() * messages.length)];
+    if (!guesses.length) return randomMessage(messages.welcome);
+    if (latestMatchCounts.newMatches === 1 && !done) return randomMessage(messages.newMatched1);
+    if (latestMatchCounts.newMatches === 2 && !done) return randomMessage(messages.newMatched2);
+    if (latestMatchCounts.newMatches === 3 && !done) return randomMessage(messages.newMatched3);
+    if (latestMatchCounts.newMisMatches === 1 && !done) return randomMessage(messages.newMisMatch1);
+    if (latestMatchCounts.newMisMatches === 2 && !done) return randomMessage(messages.newMisMatch2);
+    if (!done) return randomMessage(messages.NoNew);
+    if (done && giveup === false) return messages.winner[0] + guesses.length + messages.winner[1];
+    if (done && giveup === true) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
     return "";
-  }, [done, giveup, guesses, newMatches]);
+  }, [done, giveup, guesses, latestMatchCounts]);
 
   const getWord = () => {
     setFetching(true);
@@ -323,6 +329,7 @@ function App() {
                     setWord(undefined);
                     setGiveup(false);
                     getWord();
+                    setFoundMatches(0);
                   }}
                 />
               )}
