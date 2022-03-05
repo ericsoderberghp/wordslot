@@ -183,7 +183,11 @@ function App() {
     if (done && giveup === false) return messages.winner[0] + guesses.length + messages.winner[1];
     if (done && giveup === true) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
     return "";
+<<<<<<< HEAD
   }, [done, giveup, guesses, latestMatchCounts]);
+=======
+  }, [done, giveup, guesses]);
+>>>>>>> 2b1bcc571f8b0e0db344437d6ee4c36f27d42731
 
   const getWord = () => {
     setFetching(true);
