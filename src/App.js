@@ -89,7 +89,7 @@ const Guess = ({ guess, matches, word , giveup}) => {
 
         // remind the user if a letter doesn't match anything
         const color =
-          (guess[index] && matches && matches[guess[index]]) === "unmatch"
+          (guess[index] && matches && matches.nextMatches[guess[index]]) === "unmatch"
             ? "unmatch"
             : undefined;
 
@@ -141,20 +141,25 @@ function App() {
   const [guess, setGuess] = useState("");
   const [themeMode, setThemeMode] = useState(browserThemeMode());
   const [giveup,setGiveup] = useState(false);
-  const [foundMatches, setFoundMatches] = useState(0);
   const inputRef = useRef();
 
   const matches = useMemo(() => {
     const nextMatches = {};
+    let newMatches = 0, newMisMatches = 0;
     guesses.forEach((guess) => {
+      newMatches = 0;
+      newMisMatches = 0;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
         if (nextMatches[guess[index]] !== "match") {
           nextMatches[guess[index]] = result;
+          if (result === "match") newMatches++;
+          if (result === "mismatch") newMisMatches++;
         };
       });
     });
-    return nextMatches;
+    console.log(newMatches, newMisMatches);
+    return {nextMatches, newMatches, newMisMatches};
   }, [guesses, word]);
 
   const done = useMemo(
@@ -162,32 +167,19 @@ function App() {
     [guesses, word]
   );
 
-  const latestMatchCounts = useMemo(() => {
-    const allResults = letters.map((l) => matches[l]);
-    const newMatches = allResults.filter(x => x==="match").length - foundMatches;
-    setFoundMatches(foundMatches + newMatches);
-    const newMisMatches = allResults.filter(x => x==="mismatch").length;
-    console.log(newMatches, newMisMatches);
-    return {newMatches, newMisMatches};
-  }, [matches]);
-
   const message = useMemo(() => {
     const randomMessage = (messages) => messages[Math.floor(Math.random() * messages.length)];
     if (!guesses.length) return randomMessage(messages.welcome);
-    if (latestMatchCounts.newMatches === 1 && !done) return randomMessage(messages.newMatched1);
-    if (latestMatchCounts.newMatches === 2 && !done) return randomMessage(messages.newMatched2);
-    if (latestMatchCounts.newMatches === 3 && !done) return randomMessage(messages.newMatched3);
-    if (latestMatchCounts.newMisMatches === 1 && !done) return randomMessage(messages.newMisMatch1);
-    if (latestMatchCounts.newMisMatches === 2 && !done) return randomMessage(messages.newMisMatch2);
+    if (matches.newMatches === 1 && !done) return randomMessage(messages.newMatched1);
+    if (matches.newMatches === 2 && !done) return randomMessage(messages.newMatched2);
+    if (matches.newMatches === 3 && !done) return randomMessage(messages.newMatched3);
+    if (matches.newMisMatches === 1 && !done) return randomMessage(messages.newMisMatch1);
+    if (matches.newMisMatches === 2 && !done) return randomMessage(messages.newMisMatch2);
     if (!done) return randomMessage(messages.NoNew);
     if (done && giveup === false) return messages.winner[0] + guesses.length + messages.winner[1];
     if (done && giveup === true) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
     return "";
-<<<<<<< HEAD
-  }, [done, giveup, guesses, latestMatchCounts]);
-=======
-  }, [done, giveup, guesses]);
->>>>>>> 2b1bcc571f8b0e0db344437d6ee4c36f27d42731
+  }, [done, giveup, guesses, matches]);
 
   const getWord = () => {
     setFetching(true);
@@ -308,7 +300,7 @@ function App() {
               >
                 {guesses.length > 0 &&
                   letters.map((l) => {
-                    const background = matches[l];
+                    const background = matches.nextMatches[l];
                     return (
                       <Box
                         key={l + background}
@@ -333,7 +325,6 @@ function App() {
                     setWord(undefined);
                     setGiveup(false);
                     getWord();
-                    setFoundMatches(0);
                   }}
                 />
               )}
