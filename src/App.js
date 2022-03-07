@@ -20,7 +20,7 @@ const theme = {
       brand: "#5395A9",
       focus: "brand",
       match: "#00FF0066",
-      mismatch: "#FFFF0066",
+      mismatch: '#F1C40F',//"#FFFF0066",
       unmatch: {
         dark: "#FFFFFF44",
         light: "#00000033",
@@ -146,15 +146,14 @@ function App() {
   const matches = useMemo(() => {
     const nextMatches = {};
     let newMatches = 0, newMisMatches = 0;
-    guesses.forEach((guess) => {
-      newMatches = 0;
-      newMisMatches = 0;
+    guesses.forEach((guess, guessIndex) => {
+      const isLastGuess = guessIndex === guesses.length - 1;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
         if (nextMatches[guess[index]] !== "match") {
           nextMatches[guess[index]] = result;
-          if (result === "match") newMatches++;
-          if (result === "mismatch") newMisMatches++;
+          if (result === "match" && isLastGuess) newMatches++;
+          if (result === "mismatch" && isLastGuess) newMisMatches++;
         };
       });
     });
