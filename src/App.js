@@ -89,7 +89,7 @@ const Guess = ({ guess, matches, word , giveup}) => {
 
         // remind the user if a letter doesn't match anything
         const color =
-          (guess[index] && matches && matches.nextMatches[guess[index]]) === "unmatch"
+          (guess[index] && matches && matches[guess[index]]) === "unmatch"
             ? "unmatch"
             : undefined;
 
@@ -97,7 +97,7 @@ const Guess = ({ guess, matches, word , giveup}) => {
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
           if (word === guess) {
-            if (giveup === false)
+            if (!giveup)
             animation.push({ type: "pulse", delay: 2000 + 200 * index });
           }
         }
@@ -143,22 +143,22 @@ function App() {
   const [giveup,setGiveup] = useState(false);
   const inputRef = useRef();
 
-  const matches = useMemo(() => {
+  const {matches, newMatches, newMisMatches} = useMemo(() => {
     const nextMatches = {};
-    let newMatches = 0, newMisMatches = 0;
+    let newMatch = 0, newMisMatch = 0;
     guesses.forEach((guess, guessIndex) => {
       const isLastGuess = guessIndex === guesses.length - 1;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
         if (nextMatches[guess[index]] !== "match") {
           nextMatches[guess[index]] = result;
-          if (result === "match" && isLastGuess) newMatches++;
-          if (result === "mismatch" && isLastGuess) newMisMatches++;
+          if (result === "match" && isLastGuess) newMatch++;
+          if (result === "mismatch" && isLastGuess) newMisMatch++;
         };
       });
     });
-    console.log(newMatches, newMisMatches);
-    return {nextMatches, newMatches, newMisMatches};
+    console.log(newMatch, newMisMatch);
+    return {matches: nextMatches, newMatches: newMatch, newMisMatches: newMisMatch};
   }, [guesses, word]);
 
   const done = useMemo(
@@ -169,14 +169,16 @@ function App() {
   const message = useMemo(() => {
     const randomMessage = (messages) => messages[Math.floor(Math.random() * messages.length)];
     if (!guesses.length) return randomMessage(messages.welcome);
-    if (matches.newMatches === 1 && !done) return randomMessage(messages.newMatched1);
-    if (matches.newMatches === 2 && !done) return randomMessage(messages.newMatched2);
-    if (matches.newMatches === 3 && !done) return randomMessage(messages.newMatched3);
-    if (matches.newMisMatches === 1 && !done) return randomMessage(messages.newMisMatch1);
-    if (matches.newMisMatches === 2 && !done) return randomMessage(messages.newMisMatch2);
-    if (!done) return randomMessage(messages.NoNew);
-    if (done && giveup === false) return messages.winner[0] + guesses.length + messages.winner[1];
-    if (done && giveup === true) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
+    if (!done) {
+    if (newMatches === 1) return randomMessage(messages.newMatched1);
+    if (newMatches === 2) return randomMessage(messages.newMatched2);
+    if (newMatches === 3) return randomMessage(messages.newMatched3);
+    if (newMisMatches === 1) return randomMessage(messages.newMisMatch1);
+    if (newMisMatches === 2) return randomMessage(messages.newMisMatch2);
+    return randomMessage(messages.NoNew);
+    };
+    if (done && !giveup) return messages.winner[0] + guesses.length + messages.winner[1];
+    if (done && giveup) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
     return "";
   }, [done, giveup, guesses, matches]);
 
@@ -299,7 +301,7 @@ function App() {
               >
                 {guesses.length > 0 &&
                   letters.map((l) => {
-                    const background = matches.nextMatches[l];
+                    const background = matches[l];
                     return (
                       <Box
                         key={l + background}
