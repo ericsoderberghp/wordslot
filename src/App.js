@@ -180,7 +180,7 @@ function App() {
     if (done && !giveup) return messages.winner[0] + guesses.length + messages.winner[1];
     if (done && giveup) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
     return "";
-  }, [done, giveup, guesses, matches]);
+  }, [done, giveup, guesses, newMatches, newMisMatches]);
 
   const getWord = () => {
     setFetching(true);
