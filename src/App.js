@@ -58,7 +58,7 @@ const check = (index, guess, word) => {
   return undefined;
 };
 
-const Guess = ({ guess, matches, word , giveup}) => {
+const Guess = ({ guess, matches, word, giveup }) => {
   const focusIndex = guess.length === indexes.length ? undefined : guess.length;
   return (
     <Box direction="row" flex={false}>
@@ -96,9 +96,8 @@ const Guess = ({ guess, matches, word , giveup}) => {
         const animation = [];
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
-          if (word === guess) {
-            if (!giveup)
-            animation.push({ type: "pulse", delay: 2000 + 200 * index });
+          if (word === guess && giveup === false) {
+              animation.push({ type: "pulse", delay: 2000 + 200 * index });
           }
         }
 
@@ -123,15 +122,15 @@ const Guess = ({ guess, matches, word , giveup}) => {
 };
 
 const messages = {
-welcome: ["Guess the five letter word"],
-newMatched3: ["Are you clarvoyant!?","Time to buy some lotto tickets"],
-newMatched2: ["Outstanding!","Fantastic!"],
-newMatched1: ["Well done!","Impressive"],
-newMisMatch2: ["Good job!","Nice!"],
-newMisMatch1: ["You're making progress.","Keep chipping away at it."],
-NoNew: ["Bummer.","A few options eliminated."],
-winner: ["Congratulations! It took you ", " guesses."],
-loser: ["You gave up after ", " guesses."],
+  welcome: ["Guess the five letter word"],
+  newMatched3: ["Are you clarvoyant!?", "Time to buy some lotto tickets"],
+  newMatched2: ["Outstanding!", "Fantastic!"],
+  newMatched1: ["Well done!", "Impressive"],
+  newMisMatch2: ["Good job!", "Nice!"],
+  newMisMatch1: ["You're making progress.", "Keep chipping away at it."],
+  NoNew: ["Bummer.", "A few options eliminated."],
+  winner: ["Congratulations! It took you ", " guesses."],
+  loser: ["You gave up after ", " guesses."],
 };
 
 function App() {
@@ -140,25 +139,24 @@ function App() {
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
   const [themeMode, setThemeMode] = useState(browserThemeMode());
-  const [giveup,setGiveup] = useState(false);
+  const [giveup, setGiveup] = useState(false);
   const inputRef = useRef();
 
-  const {matches, newMatches, newMisMatches} = useMemo(() => {
+  const { matches, newMatches, newMisMatches } = useMemo(() => {
     const nextMatches = {};
-    let newMatch = 0, newMisMatch = 0;
+    let newMatches = 0, newMisMatches = 0;
     guesses.forEach((guess, guessIndex) => {
       const isLastGuess = guessIndex === guesses.length - 1;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
         if (nextMatches[guess[index]] !== "match") {
           nextMatches[guess[index]] = result;
-          if (result === "match" && isLastGuess) newMatch++;
-          if (result === "mismatch" && isLastGuess) newMisMatch++;
+          if (result === "match" && isLastGuess) newMatches++;
+          if (result === "mismatch" && isLastGuess) newMisMatches++;
         };
       });
     });
-    console.log(newMatch, newMisMatch);
-    return {matches: nextMatches, newMatches: newMatch, newMisMatches: newMisMatch};
+    return { matches: nextMatches, newMatches, newMisMatches };
   }, [guesses, word]);
 
   const done = useMemo(
@@ -170,15 +168,15 @@ function App() {
     const randomMessage = (messages) => messages[Math.floor(Math.random() * messages.length)];
     if (!guesses.length) return randomMessage(messages.welcome);
     if (!done) {
-    if (newMatches === 1) return randomMessage(messages.newMatched1);
-    if (newMatches === 2) return randomMessage(messages.newMatched2);
-    if (newMatches === 3) return randomMessage(messages.newMatched3);
-    if (newMisMatches === 1) return randomMessage(messages.newMisMatch1);
-    if (newMisMatches === 2) return randomMessage(messages.newMisMatch2);
-    return randomMessage(messages.NoNew);
+      if (newMatches === 1) return randomMessage(messages.newMatched1);
+      if (newMatches === 2) return randomMessage(messages.newMatched2);
+      if (newMatches >= 3) return randomMessage(messages.newMatched3);
+      if (newMisMatches === 1) return randomMessage(messages.newMisMatch1);
+      if (newMisMatches >= 2) return randomMessage(messages.newMisMatch2);
+      return randomMessage(messages.NoNew);
     };
     if (done && !giveup) return messages.winner[0] + guesses.length + messages.winner[1];
-    if (done && giveup) return messages.loser[0] + String(guesses.length-1) + messages.loser[1];
+    if (done && giveup) return messages.loser[0] + String(guesses.length - 1) + messages.loser[1];
     return "";
   }, [done, giveup, guesses, matches]);
 
