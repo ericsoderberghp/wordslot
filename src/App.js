@@ -96,7 +96,7 @@ const Guess = ({ guess, matches, word, giveup }) => {
         const animation = [];
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
-          if (word === guess && giveup === false) {
+          if (word === guess && !giveup) {
               animation.push({ type: "pulse", delay: 2000 + 200 * index });
           }
         }
@@ -261,7 +261,7 @@ function App() {
 
             <Box flex={false} gap="xsmall">
               {guesses.map((guess, index) => (
-                <Guess key={index} guess={guess} word={word} />
+                <Guess key={index} guess={guess} word={word} giveup={giveup} />
               ))}
               {word && guesses[guesses.length - 1] !== word && (
                 <Box
