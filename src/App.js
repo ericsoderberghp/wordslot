@@ -20,7 +20,7 @@ const theme = {
       brand: "#5395A9",
       focus: "brand",
       match: "#00FF0066",
-      mismatch: "#FFFF0066",
+      mismatch: '#F1C40F',//"#FFFF0066",
       unmatch: {
         dark: "#FFFFFF44",
         light: "#00000033",
@@ -58,7 +58,7 @@ const check = (index, guess, word) => {
   return undefined;
 };
 
-const Guess = ({ guess, matches, word }) => {
+const Guess = ({ guess, matches, word, giveup }) => {
   const focusIndex = guess.length === indexes.length ? undefined : guess.length;
   return (
     <Box direction="row" flex={false}>
@@ -96,8 +96,9 @@ const Guess = ({ guess, matches, word }) => {
         const animation = [];
         if (word) {
           animation.push({ type: "fadeIn", delay: 500 * index });
-          if (word === guess)
-            animation.push({ type: "pulse", delay: 2000 + 200 * index });
+          if (word === guess && !giveup) {
+              animation.push({ type: "pulse", delay: 2000 + 200 * index });
+          }
         }
 
         return (
@@ -120,25 +121,42 @@ const Guess = ({ guess, matches, word }) => {
   );
 };
 
+const messages = {
+  welcome: ["Guess the five letter word"],
+  newMatched3: ["Are you clarvoyant!?", "Time to buy some lotto tickets"],
+  newMatched2: ["Outstanding!", "Fantastic!"],
+  newMatched1: ["Well done!", "Impressive"],
+  newMisMatch2: ["Good job!", "Nice!"],
+  newMisMatch1: ["You're making progress.", "Keep chipping away at it."],
+  NoNew: ["Bummer.", "A few options eliminated."],
+  winner: ["Congratulations! It took you ", " guesses."],
+  loser: ["You gave up after ", " guesses."],
+};
+
 function App() {
   const [fetching, setFetching] = useState();
   const [word, setWord] = useState();
   const [guesses, setGuesses] = useState([]);
   const [guess, setGuess] = useState("");
   const [themeMode, setThemeMode] = useState(browserThemeMode());
-  const [giveup,setGiveup] = useState(false);
+  const [giveup, setGiveup] = useState(false);
   const inputRef = useRef();
 
-  const matches = useMemo(() => {
+  const { matches, newMatches, newMisMatches } = useMemo(() => {
     const nextMatches = {};
-    guesses.forEach((guess) => {
+    let newMatches = 0, newMisMatches = 0;
+    guesses.forEach((guess, guessIndex) => {
+      const isLastGuess = guessIndex === guesses.length - 1;
       indexes.forEach((index) => {
         const result = check(index, guess, word);
-        if (nextMatches[guess[index]] !== "match")
+        if (nextMatches[guess[index]] !== "match") {
           nextMatches[guess[index]] = result;
+          if (result === "match" && isLastGuess) newMatches++;
+          if (result === "mismatch" && isLastGuess) newMisMatches++;
+        };
       });
     });
-    return nextMatches;
+    return { matches: nextMatches, newMatches, newMisMatches };
   }, [guesses, word]);
 
   const done = useMemo(
@@ -147,12 +165,20 @@ function App() {
   );
 
   const message = useMemo(() => {
-    if (!guesses.length) return "Guess the five letter word";
-    if (guesses.length > 0 && !done) return "You're making progress!";
-    if (done && giveup === false) return `Congratulations! It took you ${guesses.length} guesses.`;
-    if (done && giveup === true) return `You gave up after ${guesses.length-1} guesses.`;
+    const randomMessage = (messages) => messages[Math.floor(Math.random() * messages.length)];
+    if (!guesses.length) return randomMessage(messages.welcome);
+    if (!done) {
+      if (newMatches === 1) return randomMessage(messages.newMatched1);
+      if (newMatches === 2) return randomMessage(messages.newMatched2);
+      if (newMatches >= 3) return randomMessage(messages.newMatched3);
+      if (newMisMatches === 1) return randomMessage(messages.newMisMatch1);
+      if (newMisMatches >= 2) return randomMessage(messages.newMisMatch2);
+      return randomMessage(messages.NoNew);
+    };
+    if (done && !giveup) return messages.winner[0] + guesses.length + messages.winner[1];
+    if (done && giveup) return messages.loser[0] + String(guesses.length - 1) + messages.loser[1];
     return "";
-  }, [done, giveup, guesses]);
+  }, [done, giveup, guesses, newMatches, newMisMatches]);
 
   const getWord = () => {
     setFetching(true);
@@ -235,7 +261,7 @@ function App() {
 
             <Box flex={false} gap="xsmall">
               {guesses.map((guess, index) => (
-                <Guess key={index} guess={guess} word={word} />
+                <Guess key={index} guess={guess} word={word} giveup={giveup} />
               ))}
               {word && guesses[guesses.length - 1] !== word && (
                 <Box
